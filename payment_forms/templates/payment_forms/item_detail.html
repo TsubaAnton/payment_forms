@@ -1,0 +1,369 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>{{ item.name }} - Детали продукта</title>
+    <script src="https://js.stripe.com/v3/"></script>
+    <style>
+        :root {
+            --primary-color: #4a6cf7;
+            --success-color: #10b981;
+            --error-color: #ef4444;
+            --text-color: #334155;
+            --border-color: #e2e8f0;
+            --bg-color: #f8fafc;
+        }
+
+        * {
+            box-sizing: border-box;
+            margin: 0;
+            padding: 0;
+        }
+
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            line-height: 1.6;
+            color: var(--text-color);
+            background-color: #f1f5f9;
+            padding: 20px;
+        }
+
+        .product-container {
+            max-width: 800px;
+            margin: 0 auto;
+            background: white;
+            border-radius: 12px;
+            box-shadow: 0 4px 20px rgba(0, 0, 0, 0.08);
+            overflow: hidden;
+        }
+
+        .product-header {
+            background: var(--primary-color);
+            color: white;
+            padding: 25px 30px;
+        }
+
+        .product-header h1 {
+            font-size: 1.8rem;
+            font-weight: 600;
+        }
+
+        .product-content {
+            padding: 30px;
+            display: grid;
+            grid-template-columns: 1fr;
+            gap: 30px;
+        }
+
+        @media (min-width: 768px) {
+            .product-content {
+                grid-template-columns: 1fr 1fr;
+            }
+        }
+
+        .product-image {
+            background-color: var(--bg-color);
+            border-radius: 8px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            height: 300px;
+            overflow: hidden;
+        }
+
+        .product-image-placeholder {
+            font-size: 4rem;
+            color: #cbd5e1;
+        }
+
+        .product-details {
+            display: flex;
+            flex-direction: column;
+        }
+
+        .product-title {
+            font-size: 1.5rem;
+            font-weight: 600;
+            margin-bottom: 15px;
+        }
+
+        .product-description {
+            margin-bottom: 20px;
+            color: #475569;
+            line-height: 1.7;
+        }
+
+        .product-price {
+            font-size: 1.8rem;
+            font-weight: 700;
+            margin-bottom: 25px;
+            color: var(--primary-color);
+        }
+
+        .product-currency {
+            font-size: 1rem;
+            color: #64748b;
+            font-weight: normal;
+        }
+
+        #payment-form {
+            margin-top: 20px;
+        }
+
+        #card-element {
+            border: 1px solid var(--border-color);
+            padding: 15px;
+            border-radius: 8px;
+            margin-bottom: 15px;
+            background: var(--bg-color);
+        }
+
+        #card-errors {
+            color: var(--error-color);
+            margin-bottom: 15px;
+            min-height: 20px;
+            font-size: 0.9rem;
+        }
+
+        #submit-button {
+            background-color: var(--primary-color);
+            color: white;
+            border: none;
+            padding: 14px 20px;
+            border-radius: 8px;
+            cursor: pointer;
+            font-size: 1.1rem;
+            font-weight: 600;
+            width: 100%;
+            transition: background-color 0.2s;
+        }
+
+        #submit-button:hover:not(:disabled) {
+            background-color: #3a5ce5;
+        }
+
+        #submit-button:disabled {
+            background-color: #94a3b8;
+            cursor: not-allowed;
+        }
+
+        #payment-result {
+            margin-top: 25px;
+            padding: 20px;
+            border-radius: 8px;
+        }
+
+        .payment-success {
+            background-color: #dcfce7;
+            color: #166534;
+            border: 1px solid #bbf7d0;
+        }
+
+        .payment-error {
+            background-color: #fee2e2;
+            color: #b91c1c;
+            border: 1px solid #fecaca;
+        }
+
+        .payment-result-title {
+            font-size: 1.3rem;
+            font-weight: 600;
+            margin-bottom: 15px;
+        }
+
+        .result-row {
+            display: flex;
+            margin-bottom: 8px;
+        }
+
+        .result-label {
+            min-width: 140px;
+            font-weight: 500;
+        }
+
+        .loader {
+            display: none;
+            text-align: center;
+            margin: 20px 0;
+        }
+
+        .loader-spinner {
+            border: 4px solid rgba(0, 0, 0, 0.1);
+            border-left-color: var(--primary-color);
+            border-radius: 50%;
+            width: 30px;
+            height: 30px;
+            animation: spin 1s linear infinite;
+            margin: 0 auto 10px;
+        }
+
+        @keyframes spin {
+            to { transform: rotate(360deg); }
+        }
+
+        .back-link {
+            display: inline-block;
+            margin-top: 25px;
+            color: var(--primary-color);
+            text-decoration: none;
+            font-weight: 500;
+        }
+
+        .back-link:hover {
+            text-decoration: underline;
+        }
+    </style>
+</head>
+<body>
+    <div class="product-container">
+        <div class="product-header">
+            <h1>{{ item.name }}</h1>
+        </div>
+
+        <div class="product-content">
+            <div class="product-image">
+                <div class="product-image-placeholder">📱</div>
+            </div>
+
+            <div class="product-details">
+                <h2 class="product-title">{{ item.name }}</h2>
+
+                <p class="product-description">{{ item.description }}</p>
+
+                <div class="product-price">
+                    {{ item.price }}
+                    <span class="product-currency">{{ item.currency|upper }}</span>
+                </div>
+
+                <div id="payment-form">
+                    <h3 class="product-title">Детали оплаты</h3>
+                    <div id="card-element"></div>
+                    <div id="card-errors" role="alert"></div>
+                    <button id="submit-button">Приобрести сейчас</button>
+
+                    <div class="loader" id="payment-loader">
+                        <div class="loader-spinner"></div>
+                        <p>Оплата проходит...</p>
+                    </div>
+
+                    <div id="payment-result"></div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        document.addEventListener('DOMContentLoaded', async () => {
+            const loader = document.getElementById('payment-loader');
+            const submitButton = document.getElementById('submit-button');
+            const cardErrors = document.getElementById('card-errors');
+            const paymentResult = document.getElementById('payment-result');
+
+            try {
+                loader.style.display = 'block';
+                submitButton.disabled = true;
+
+                const response = await fetch('/buy/{{ item.id }}/', {
+                    method: 'GET',
+                    headers: {
+                        'Content-Type': 'application/json'
+                    }
+                });
+
+                if (!response.ok) {
+                    throw new Error(`HTTP error! status: ${response.status}`);
+                }
+
+                const data = await response.json();
+
+                if (data.error) {
+                    throw new Error(data.error);
+                }
+
+                const stripe = Stripe(data.publicKey);
+                const elements = stripe.elements();
+                const cardElement = elements.create('card');
+
+                cardElement.mount('#card-element');
+
+                cardElement.addEventListener('change', (event) => {
+                    if (event.error) {
+                        cardErrors.textContent = event.error.message;
+                    } else {
+                        cardErrors.textContent = '';
+                    }
+                });
+
+                submitButton.disabled = false;
+
+                submitButton.addEventListener('click', async (e) => {
+                    e.preventDefault();
+
+                    submitButton.disabled = true;
+                    loader.style.display = 'block';
+                    cardErrors.textContent = '';
+                    paymentResult.innerHTML = '';
+
+                    try {
+                        const { error, paymentIntent } = await stripe.confirmCardPayment(
+                            data.clientSecret, {
+                                payment_method: {
+                                    card: cardElement,
+                                }
+                            }
+                        );
+
+                        if (error) {
+                            throw new Error(error.message);
+                        }
+
+                        paymentResult.innerHTML = `
+                            <div class="payment-success">
+                                <h3 class="payment-result-title">Оплата прошла!</h3>
+                                <div class="result-row">
+                                    <div class="result-label">ID транзакции:</div>
+                                    <div>${paymentIntent.id}</div>
+                                </div>
+                                <div class="result-row">
+                                    <div class="result-label">Сумма:</div>
+                                    <div>${paymentIntent.amount / 100} ${paymentIntent.currency.toUpperCase()}</div>
+                                </div>
+                                <div class="result-row">
+                                    <div class="result-label">Статус:</div>
+                                    <div>${paymentIntent.status}</div>
+                                </div>
+                                <div class="result-row">
+                                    <div class="result-label">Дата:</div>
+                                    <div>${new Date().toLocaleString()}</div>
+                                </div>
+                            </div>
+                        `;
+                    } catch (error) {
+                        cardErrors.textContent = error.message;
+                        paymentResult.innerHTML = `
+                            <div class="payment-error">
+                                <h3 class="payment-result-title">Payment Failed</h3>
+                                <p>${error.message}</p>
+                            </div>
+                        `;
+                    } finally {
+                        loader.style.display = 'none';
+                        submitButton.disabled = false;
+                    }
+                });
+            } catch (error) {
+                cardErrors.textContent = `Error: ${error.message}`;
+                paymentResult.innerHTML = `
+                    <div class="payment-error">
+                        <h3 class="payment-result-title">Initialization Failed</h3>
+                        <p>${error.message}</p>
+                    </div>
+                `;
+            } finally {
+                loader.style.display = 'none';
+            }
+        });
+    </script>
+</body>
+</html>
