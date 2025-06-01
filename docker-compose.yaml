@@ -2,7 +2,7 @@ version: "3"
 
 services:
   db:
-    image: postgres
+    image: postgres:17
     restart: on-failure
     env_file:
       - ./.env
@@ -21,7 +21,7 @@ services:
     tty: true
     ports:
       - "8000:8000"
-    command: bash -c "python manage.py migrate && python manage.py runserver 0.0.0.0:8000"
+    command: bash -c "python manage.py migrate && python manage.py collectstatic --noinput && python manage.py runserver 0.0.0.0:8000"
     depends_on:
       db:
         condition: service_healthy
